@@ -34,7 +34,7 @@ class AVRSDRotationalLogger final : public LoggerBase
 	/// Default destructor
 	~AVRSDRotationalLogger() noexcept = default;
 
-	size_t size() const noexcept final
+	/* size_t size() const noexcept final
 	{
 		return file_.size();
 	}
@@ -43,7 +43,7 @@ class AVRSDRotationalLogger final : public LoggerBase
 	{
 		// size in blocks * bytes per block (512 Bytes = 2^9)
 		return fs_ ? fs_->card()->sectorCount() << 9 : 0;
-	}
+	} */
 
 	void flush() noexcept final
 	{
@@ -73,7 +73,7 @@ class AVRSDRotationalLogger final : public LoggerBase
 		print("[%u ms] ", millis());
 	}
 
-	void begin(SdFs& sd_inst)
+	void begin(SdFat& sd_inst)
 	{
 		fs_ = &sd_inst;
 
@@ -126,14 +126,14 @@ class AVRSDRotationalLogger final : public LoggerBase
 	void errorHalt(const char* msg)
 	{
 		printf("Error: %s\n", msg);
-		if(fs_->sdErrorCode())
+		if(fs_->cardErrorCode())
 		{
-			if(fs_->sdErrorCode() == SD_CARD_ERROR_ACMD41)
+			if(fs_->cardErrorCode() == SD_CARD_ERROR_ACMD41)
 			{
 				printf("Try power cycling the SD card.\n");
 			}
-			printSdErrorSymbol(&Serial, fs_->sdErrorCode());
-			printf(", ErrorData: 0x%x\n", fs_->sdErrorData());
+			fs_->errorPrint(&Serial);
+			printf(", ErrorData: 0x%x\n", fs_->cardErrorData());
 		}
 		while(true)
 		{
@@ -183,9 +183,9 @@ class AVRSDRotationalLogger final : public LoggerBase
 	}
 
   private:
-	SdFs* fs_;
+	SdFat* fs_;
 	char filename_[FILENAME_SIZE];
-	FsFile file_;
+	SdFile file_;
 
 	char buffer_[BUFFER_SIZE] = {0};
 	size_t counter = 0;
